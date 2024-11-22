@@ -50,10 +50,10 @@ window.__blink_invoker__ =  function (methodName) {
         }
         
     let promise = new Promise(function(resolve, reject) {
-        __invokeProxy(JSON.stringify({
+        window.mbQuery(0, JSON.stringify({
         	MethodName: methodName,
         	Params: args.map(JSON.stringify)
-        }),function(resultString) {
+        }),function(customMsg,resultString) {
         	try{
         	    let result = JSON.parse(resultString, __date_parser__);
         	    if(result.Success){
@@ -140,7 +140,7 @@ func init() {
 }
 
 //export goInvokeDispatcher
-func goInvokeDispatcher(window C.wkeWebView, callback C.jsValue, invocationString *C.char) {
+func goInvokeDispatcher(window C.mbWebView, queryId C.int64_t, customMsg C.int, invocationString *C.char) {
 	//获取调用的基本信息
 	//对invocationString的取值放在go func的外部,因为go func是异步的
 	//防止方法返回后MB回收这个字符串内存
@@ -177,7 +177,7 @@ func goInvokeDispatcher(window C.wkeWebView, callback C.jsValue, invocationStrin
 				view := getWebViewByWindow(window)
 				if view != nil {
 					if !view.IsDestroy {
-						C.callbackProxy(window, callback, C.CString(string(jsonData)))
+						C.callbackProxy(window, queryId, customMsg, C.CString(string(jsonData)))
 					}
 				}
 			}
@@ -267,7 +267,7 @@ func goInvokeDispatcher(window C.wkeWebView, callback C.jsValue, invocationStrin
 }
 
 //export goGetInteropJS
-func goGetInteropJS(window C.wkeWebView) *C.char {
+func goGetInteropJS(window C.mbWebView) *C.char {
 	view := getWebViewByWindow(window)
 
 	var buffer bytes.Buffer

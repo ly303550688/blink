@@ -22,7 +22,7 @@ func UnregisterFileSystem(domain string) {
 }
 
 //export goGetNetFSData
-func goGetNetFSData(window C.wkeWebView, url *C.char) (result C.int, mimeType *C.char, data unsafe.Pointer, length C.int) {
+func goGetNetFSData(window C.mbWebView, url *C.char) (result C.int, mimeType *C.char, data unsafe.Pointer, length C.int) {
 	//解析url
 	u, err := urlLib.Parse(C.GoString(url))
 	if err != nil {

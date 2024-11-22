@@ -1,13 +1,13 @@
 package blink
 
-//#include "wke.h"
+//#include "mb.h"
 import "C"
 import (
 	"github.com/lxn/win"
 	"sync"
 )
 
-var windowMap = make(map[C.wkeWebView]*WebView)
+var windowMap = make(map[C.mbWebView]*WebView)
 var handleMap = make(map[win.HWND]*WebView)
 var locker sync.RWMutex
 
@@ -25,7 +25,7 @@ func addViewToPool(view *WebView) {
 	})
 }
 
-func getWebViewByWindow(window C.wkeWebView) *WebView {
+func getWebViewByWindow(window C.mbWebView) *WebView {
 	locker.RLock()
 	if view, exist := windowMap[window]; exist {
 		locker.RUnlock()

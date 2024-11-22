@@ -1,63 +1,58 @@
+#include "event.h"
 #include "webview.h"
 
-wkeWebView createWebWindow(bool isTransparent, int x, int y, int width, int height)
+mbWebView createWebWindow(bool isTransparent, int x, int y, int width, int height)
 {
-    wkeWebView window = wkeCreateWebWindow(isTransparent ? WKE_WINDOW_TYPE_TRANSPARENT : WKE_WINDOW_TYPE_POPUP, NULL, x, y, width, height);
-    //设置数据目录
-    wkeSetLocalStorageFullPath(window, wlocalstorage);
-    wkeSetCookieJarFullPath(window, wcookiejar);
-    //初始化网络文件系统
+    mbWebView window = mbCreateWebWindow(isTransparent ? MB_WINDOW_TYPE_TRANSPARENT : MB_WINDOW_TYPE_POPUP, NULL, x, y, width, height);
+    // 设置数据目录
+    mbSetLocalStorageFullPath(window, wlocalstorage);
+    mbSetCookieJarFullPath(window, wcookiejar);
+    mbSetNavigationToNewWindowEnable(window, true);
+    // 初始化网络文件系统
     initNetFS(window);
-    //初始化webview事件
+    // 初始化webview事件
     initWebViewEvent(window);
     return window;
 }
 
-HWND getWindowHandle(wkeWebView window)
+HWND getWindowHandle(mbWebView window)
 {
-    return wkeGetWindowHandle(window);
+    return mbGetHostHWND(window);
 }
 
-void loadURL(wkeWebView window, char *url)
+void loadURL(mbWebView window, char *url)
 {
-    wkeLoadURL(window, url);
+    mbLoadURL(window, url);
     free(url);
 }
 
-void reloadURL(wkeWebView window)
+void reloadURL(mbWebView window)
 {
-    wkeReload(window);
+    mbReload(window);
 }
 
-void setWindowTitle(wkeWebView window, char *title)
+void setWindowTitle(mbWebView window, char *title)
 {
-    wkeSetWindowTitle(window, title);
+    mbSetWindowTitle(window, title);
     free(title);
 }
 
-const char *getWebTitle(wkeWebView window)
+const char *getWebTitle(mbWebView window)
 {
-    return wkeGetTitle(window);
+    return mbGetTitle(window);
 }
 
-void destroyWindow(wkeWebView window)
+void destroyWindow(mbWebView window)
 {
-    wkeDestroyWebWindow(window);
+    mbDestroyWebView(window);
 }
 
-void WKE_CALL_TYPE onShowDevtoolsCallback(wkeWebView window, void *param)
+void resizeWindow(mbWebView window, int width, int height)
 {
-    //设置数据目录
-    wkeSetLocalStorageFullPath(window, wlocalstorage);
-    wkeSetCookieJarFullPath(window, wcookiejar);
-    initNetFS(window);
-    wkeSetWindowTitle(window, "调试工具");
-    wkeResizeWindow(window, 900, 650);
-    wkeMoveToCenter(window);
-    wkeLoadURL(window, wkeGetURL(window));
+    mbResize(window, width, height);
 }
 
-void showDevTools(wkeWebView window)
+void setDebugConfig(mbWebView webView, const char *debugString, const char *param)
 {
-    wkeShowDevtools(window, L"http://__devtools__/inspector.html", onShowDevtoolsCallback, NULL);
+    mbSetDebugConfig(webView, debugString, param);
 }

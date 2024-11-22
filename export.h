@@ -1,9 +1,9 @@
-//golang导出的函数,将在这里定义,供C语言调用
+// golang导出的函数,将在这里定义,供C语言调用
 #ifndef EXPORT_DEFINE_H
 #define EXPORT_DEFINE_H
 
 /******************netfs*****************/
-//goGetNetFSData函数返回值
+// goGetNetFSData函数返回值
 struct goGetNetFSData_Return
 {
     int result;
@@ -12,23 +12,27 @@ struct goGetNetFSData_Return
     int length;
 };
 
-//获取网络文件系统数据, -> netfs.go
-struct goGetNetFSData_Return goGetNetFSData(wkeWebView window, const char *url);
+// 获取网络文件系统数据, -> netfs.go
+struct goGetNetFSData_Return goGetNetFSData(mbWebView window, const char *url);
 /*****************netfs end**************/
 
 /******************interpo*****************/
-//将JS对Golang的调用分发出去
-void goInvokeDispatcher(wkeWebView window, jsValue callback, const utf8 *invocationString);
-//获取interop js
-char *goGetInteropJS(wkeWebView window);
+// 将JS对Golang的调用分发出去
+void goInvokeDispatcher(mbWebView webView, int64_t queryId, int customMsg, const utf8 *request);
+// 获取interop js
+char *goGetInteropJS(mbWebView window);
 /*****************interpo end**************/
 
 /******************event*****************/
-//window关闭时的回调
-void goOnWindowDestroyCallback(wkeWebView window, void *param);
-//document ready回调
-void goOnDocumentReadyCallback(wkeWebView window);
-//title changed回调
-void goOnTitleChangedCallback(wkeWebView window, const utf8 *title);
+// window关闭时的回调
+void goOnWindowDestroyCallback(mbWebView window, void *param, void *unuse);
+// document ready回调
+void goOnDocumentReadyCallback(mbWebView window);
+// title changed回调
+void goOnTitleChangedCallback(mbWebView window, const utf8 *title);
+void goOnDownloadFile(mbWebView window, const char *url);
+void goOnNewWebView(mbWebView window, mbWebView newWeb, const utf8 *url);
+void goNewWebViewInit(mbWebView window);
+void goOnLoadingFinish(mbWebView window, const utf8 *url, mbLoadingResult result, const utf8 *reason);
 /*****************event end**************/
 #endif

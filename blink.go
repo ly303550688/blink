@@ -4,9 +4,7 @@ package blink
 import "C"
 
 import (
-	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/lxn/win"
-	"github.com/raintean/blink/internal/devtools"
 	"path/filepath"
 	"runtime"
 )
@@ -21,6 +19,10 @@ func InitBlink() error {
 	if err != nil {
 		return err
 	}
+	mainDllPath, err := getMainDllPath()
+	if err != nil {
+		return err
+	}
 	//启动一个新的协程来处理blink的API调用
 	go func() {
 		//将这个协程锁在当前的线程上
@@ -29,16 +31,10 @@ func InitBlink() error {
 		//初始化
 		C.initBlink(
 			C.CString(dllPath),
+			C.CString(mainDllPath),
 			C.CString(TempPath),
 			C.CString(filepath.Join(TempPath, "cookie.dat")),
 		)
-
-		//注册DevTools工具到虚拟文件系统
-		RegisterFileSystem("__devtools__", &assetfs.AssetFS{
-			Asset:     devtools.Asset,
-			AssetDir:  devtools.AssetDir,
-			AssetInfo: devtools.AssetInfo,
-		})
 
 		//消费API调用,同时处理好windows消息
 		for {
@@ -64,8 +60,6 @@ func InitBlink() error {
 			}
 		}
 	}()
-
-	logger.Println("blink初始化完毕")
 
 	return nil
 }

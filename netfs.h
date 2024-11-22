@@ -4,14 +4,14 @@
 
 #include "stdio.h"
 #include "stdlib.h"
-#include "wke.h"
+#include "mb.h"
 
 //初始化指定webview的网络文件系统
-void initNetFS(wkeWebView window);
+void initNetFS(mbWebView window);
 
 //url加载开始,回调
-bool handleLoadUrlBegin(wkeWebView window, void *param, const char *url, wkeNetJob job);
+BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView window, void *param, const char *url, mbNetJob job);
 //url加载完毕,回调
-void handleLoadUrlEnd(wkeWebView window, void *param, const char *url, wkeNetJob job, void *buf, int len);
+void MB_CALL_TYPE handleLoadUrlEnd(mbWebView window, void *param, const char *url, mbNetJob job, void *buf, int len);
 
 #endif

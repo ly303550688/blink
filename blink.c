@@ -1,14 +1,16 @@
-//blink函数实现,负责和golang做交互,并包装wke调用
+// blink函数实现,负责和golang做交互,并包装wke调用
 #include "blink.h"
 
-typedef void(WKE_CALL_TYPE *FN_wkeInitializeEx)(const wkeSettings *settings);
-
-void initBlink(char *dllpath, char *localstorage, char *cookiejar)
+void initBlink(char *dllpath, char *mainDllpath, char *localstorage, char *cookiejar)
 {
-    //转换路径字符串类型
+    // 转换路径字符串类型
     size_t cSize = strlen(dllpath) + 1;
     wchar_t *wdllpath = (wchar_t *)malloc(sizeof(wchar_t) * cSize);
     mbstowcs(wdllpath, dllpath, cSize);
+
+    cSize = strlen(mainDllpath) + 1;
+    wchar_t *wmainDllpath = (wchar_t *)malloc(sizeof(wchar_t) * cSize);
+    mbstowcs(wmainDllpath, mainDllpath, cSize);
 
     cSize = strlen(localstorage) + 1;
     wlocalstorage = (wchar_t *)malloc(sizeof(wchar_t) * cSize);
@@ -18,22 +20,26 @@ void initBlink(char *dllpath, char *localstorage, char *cookiejar)
     wcookiejar = (wchar_t *)malloc(sizeof(wchar_t) * cSize);
     mbstowcs(wcookiejar, cookiejar, cSize);
 
-    //加载dll
-    HMODULE hMod = LoadLibraryW(wdllpath);
-    FN_wkeInitializeEx wkeInitializeExFunc = (FN_wkeInitializeEx)GetProcAddress(hMod, "wkeInitializeEx");
-    wkeInitializeExFunc((wkeSettings *)0);
-    WKE_FOR_EACH_DEFINE_FUNCTION(WKE_GET_PTR_ITERATOR0, WKE_GET_PTR_ITERATOR1, WKE_GET_PTR_ITERATOR2, WKE_GET_PTR_ITERATOR3,
-                                 WKE_GET_PTR_ITERATOR4, WKE_GET_PTR_ITERATOR5, WKE_GET_PTR_ITERATOR6, WKE_GET_PTR_ITERATOR11);
+    // 加载dll
+    mbSetMbDllPath(wdllpath);
+    mbSetMbMainDllPath(wmainDllpath);
 
-    //初始化全局事件
+    mbSettings settings;
+    memset(&settings, 0, sizeof(settings));
+    mbInit(&settings);
+    // 初始化全局事件
     initGlobalEvent();
 
-    //初始化JS与Golang的交互功能
-    initInterop();
+    // 初始化JS与Golang的交互功能
+    // initInterop();
 
-    //释放内存
+    // 释放内存
     free(wdllpath);
     free(dllpath);
+    free(wmainDllpath);
+    free(mainDllpath);
+    free(wlocalstorage);
     free(localstorage);
+    free(wcookiejar);
     free(cookiejar);
 }

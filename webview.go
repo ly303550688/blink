@@ -3,15 +3,18 @@ package blink
 //#include "webview.h"
 import "C"
 import (
+	"fmt"
 	"github.com/CHH/eventemitter"
 	"github.com/lxn/win"
+	"path/filepath"
+	"syscall"
 	"unsafe"
 )
 
 type WebView struct {
 	eventemitter.EventEmitter
 
-	window C.wkeWebView
+	window C.mbWebView
 	handle win.HWND
 
 	autoTitle bool
@@ -22,7 +25,13 @@ type WebView struct {
 	DocumentReady chan interface{} //文档ready
 	Destroy       chan interface{} //webview销毁
 
-	IsDestroy bool
+	IsDestroy       bool
+	IsDocumentReady bool
+	IsLoadingFinish bool
+	//加载结果 0 成功 1 失败 2取消
+	LoadingResult int
+	isTransparent bool
+	resizable     bool
 }
 
 func NewWebView(isTransparent bool, bounds ...int) *WebView {
@@ -33,6 +42,7 @@ func NewWebView(isTransparent bool, bounds ...int) *WebView {
 		DocumentReady: make(chan interface{}),
 		Destroy:       make(chan interface{}),
 		IsDestroy:     false,
+		isTransparent: isTransparent,
 	}
 	//初始化event emitter
 	view.Init()
@@ -56,7 +66,6 @@ func NewWebView(isTransparent bool, bounds ...int) *WebView {
 		close(done)
 	}
 	<-done
-
 	//初始化各种事件
 	//destroy的时候需要设置标志位
 	view.On("destroy", func(v *WebView) {
@@ -76,7 +85,14 @@ func NewWebView(isTransparent bool, bounds ...int) *WebView {
 		default:
 			close(v.DocumentReady)
 		}
+		v.IsDocumentReady = true
 	})
+
+	view.OnLoadingFinish(func(v *WebView, url string, result int, reason string) {
+		v.IsLoadingFinish = true
+		v.LoadingResult = result
+	})
+
 	//同步网页标题到窗口
 	view.On("titleChanged", func(view *WebView, title string) {
 		if view.autoTitle {
@@ -100,10 +116,27 @@ func NewWebView(isTransparent bool, bounds ...int) *WebView {
 	view.Inject("MaximizeWindow", view.MaximizeWindow)
 	view.Inject("RestoreWindow", view.RestoreWindow)
 	view.Inject("DestroyWindow", view.DestroyWindow)
+	view.Inject("SetResizable", view.SetResizable)
+	view.Inject("ResizeWindow", view.ResizeWindow)
 
 	//把webview添加到池中
 	addViewToPool(view)
 	return view
+}
+func (view *WebView) GetHWND() win.HWND {
+	return view.handle
+}
+func (view *WebView) OnWndProc(proc func(view *WebView, msg uint32, wparam uintptr, lparam uintptr) (result uintptr, ok bool)) {
+	defproc := win.GetWindowLongPtr(view.handle, win.GWL_WNDPROC)
+	win.SetWindowLongPtr(view.handle, win.GWL_WNDPROC, syscall.NewCallback(func(hwnd win.HWND, msg uint32, wparam uintptr, lparam uintptr) uintptr {
+		result, ok := proc(view, msg, wparam, lparam)
+		if ok {
+			return result
+		}
+
+		r, _, _ := syscall.Syscall6(defproc, 4, uintptr(hwnd), uintptr(msg), uintptr(wparam), uintptr(lparam), 0, 0)
+		return r
+	}))
 }
 
 func (view *WebView) processMessage(msg *win.MSG) bool {
@@ -124,6 +157,34 @@ func (view *WebView) processMessage(msg *win.MSG) bool {
 	return true
 }
 
+//OnDestroy destroy事件
+func (view *WebView) OnDestroy(callback func(view *WebView)) {
+	view.On("destroy", callback)
+}
+
+// resize事件
+func (view *WebView) OnResize(callback func(view *WebView, width int32, height int32)) {
+	view.On("OnResize", callback)
+}
+
+func (view *WebView) OnMove(callback func(view *WebView, x int32, y int32)) {
+	view.On("OnMove", callback)
+}
+
+func (view *WebView) OnLoadingFinish(callback func(view *WebView, url string, result int, reason string)) {
+	view.On("LoadingFinish", callback)
+}
+
+//SetResizable 设置是否可变大小
+func (view *WebView) SetResizable(resizable bool) {
+	view.resizable = resizable
+}
+func (view *WebView) GetResizable() bool {
+	return view.resizable
+}
+func (view *WebView) GetIsTransparent() bool {
+	return view.isTransparent
+}
 func (view *WebView) MoveToCenter() {
 	var width int32 = 0
 	var height int32 = 0
@@ -184,6 +245,8 @@ func (view *WebView) GetWebTitle() string {
 }
 
 func (view *WebView) LoadURL(url string) {
+	view.IsLoadingFinish = false
+	view.LoadingResult = 0
 	done := make(chan bool)
 	jobQueue <- func() {
 		C.loadURL(view.window, C.CString(url))
@@ -222,9 +285,16 @@ func (view *WebView) HideWindow() {
 }
 
 func (view *WebView) ShowDevTools() {
+	path := fmt.Sprintf("file:///%s/inspector.html", filepath.ToSlash(filepath.Join(filepath.Dir(TempPath), "front_end")))
+	cname := C.CString("showDevTools")
+	cparam := C.CString(path)
+	defer func() {
+		C.free(unsafe.Pointer(cname))
+		C.free(unsafe.Pointer(cparam))
+	}()
 	done := make(chan bool)
 	jobQueue <- func() {
-		C.showDevTools(view.window)
+		C.setDebugConfig(view.window, cname, cparam)
 		close(done)
 	}
 	<-done
@@ -284,4 +354,34 @@ func (view *WebView) DestroyWindow() {
 		}
 		<-done
 	}
+}
+
+// 设置窗口大小
+func (view *WebView) ResizeWindow(width int, height int) {
+	if !view.resizable {
+		return
+	}
+	done := make(chan bool)
+	jobQueue <- func() {
+		C.resizeWindow(view.window, C.int(width), C.int(height))
+		close(done)
+	}
+	<-done
+}
+
+//设置调试参数
+func (view *WebView) SetDebugConfig(name string, param string) {
+	cname := C.CString(name)
+	cparam := C.CString(param)
+	defer func() {
+		C.free(unsafe.Pointer(cname))
+		C.free(unsafe.Pointer(cparam))
+	}()
+	done := make(chan bool)
+	jobQueue <- func() {
+		C.setDebugConfig(view.window, cname, cparam)
+		close(done)
+	}
+	<-done
+
 }
