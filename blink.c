@@ -38,8 +38,6 @@ void initBlink(char *dllpath, char *mainDllpath, char *localstorage, char *cooki
     free(dllpath);
     free(wmainDllpath);
     free(mainDllpath);
-    free(wlocalstorage);
     free(localstorage);
-    free(wcookiejar);
     free(cookiejar);
 }
