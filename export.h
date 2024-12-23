@@ -34,5 +34,7 @@ void goOnDownloadFile(mbWebView window, const char *url);
 void goOnNewWebView(mbWebView window, mbWebView newWeb, const utf8 *url);
 void goNewWebViewInit(mbWebView window);
 void goOnLoadingFinish(mbWebView window, const utf8 *url, mbLoadingResult result, const utf8 *reason);
+// 回调js
+void goOnMbRunJsCallback(const utf8 *result);
 /*****************event end**************/
 #endif

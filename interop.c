@@ -8,8 +8,8 @@ void initInterop()
 
 void MB_CALL_TYPE onMbRunJsCallback(mbWebView webView, void *param, mbJsExecState es, mbJsValue v)
 {
-    tempJsvalue = v;
-    tempEs = es;
+    const utf8 *str = mbJsToString(es, v);
+    goOnMbRunJsCallback(str);
 }
 
 // 当JS引擎初始化完毕,这个时候需要挂载golang的Interop
@@ -19,17 +19,16 @@ void MB_CALL_TYPE onDidCreateScriptContextCallback(mbWebView window, void *param
     if (mbIsMainFrame(window, frameId))
     {
         char *jsContent = goGetInteropJS(window);
-        mbRunJs(window, frameId, jsContent, TRUE, onMbRunJsCallback, NULL, NULL);
+        mbRunJs(window, frameId, jsContent, TRUE, NULL, NULL, NULL);
         free(jsContent);
     }
 }
 
 // run js代理,供golang来调用
-const utf8 *runJSProxy(mbWebView window, char *script)
+void runJSProxy(mbWebView window, char *script)
 {
     mbWebFrameHandle frameId = mbWebFrameGetMainFrame(window);
     mbRunJs(window, frameId, script, TRUE, onMbRunJsCallback, NULL, NULL);
-    return mbJsToString(tempEs, tempJsvalue);
     free(script);
 }
 

@@ -63,6 +63,12 @@ func goOnNewWebView(window C.mbWebView, newWebView C.mbWebView, url *C.char) {
 	}()
 }
 
+//export goOnMbRunJsCallback
+func goOnMbRunJsCallback(result *C.char) {
+	strurl := C.GoString(result)
+	jsdone <- strurl
+}
+
 //export goNewWebViewInit
 func goNewWebViewInit(window C.mbWebView) {
 	view := &WebView{

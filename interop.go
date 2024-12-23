@@ -15,6 +15,8 @@ import (
 	"unsafe"
 )
 
+var jsdone = make(chan string)
+
 //js内容模板
 var jsTemplate, _ = template.New("js").Parse(`
 window.BlinkData={};
@@ -334,7 +336,6 @@ func (view *WebView) Invoke(path string, args ...interface{}) (returnValue jsoni
 		}
 	}()
 
-	done := make(chan string)
 	jobQueue <- func() {
 		if len(args) > 0 {
 			paramJsonStrings := make([]string, len(args))
@@ -347,14 +348,13 @@ func (view *WebView) Invoke(path string, args ...interface{}) (returnValue jsoni
 				paramJsonStrings[index] = `"` + template.JSEscapeString(string(json)) + `"`
 			}
 			argsList := strings.Join(paramJsonStrings, ",")
-			result := C.runJSProxy(view.window, C.CString(fmt.Sprintf(`return __blink_runjs__('%s', %s);`, path, argsList)))
-			done <- C.GoString(result)
+			C.runJSProxy(view.window, C.CString(fmt.Sprintf(`return __blink_runjs__('%s', %s);`, path, argsList)))
 		} else {
-			result := C.runJSProxy(view.window, C.CString(fmt.Sprintf(`return __blink_runjs__('%s');`, path)))
-			done <- C.GoString(result)
+			C.runJSProxy(view.window, C.CString(fmt.Sprintf(`return __blink_runjs__('%s');`, path)))
 		}
 	}
-	resultJson := jsoniter.Get([]byte(<-done))
+	strdone := <-jsdone
+	resultJson := jsoniter.Get([]byte(strdone))
 
 	if resultJson.Get("Success").ToBool() {
 		return jsoniter.Get([]byte(resultJson.Get("ReturnValue").ToString())), nil
