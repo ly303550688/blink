@@ -353,8 +353,8 @@ func (view *WebView) Invoke(path string, args ...interface{}) (returnValue jsoni
 			C.runJSProxy(view.window, C.CString(fmt.Sprintf(`return __blink_runjs__('%s');`, path)))
 		}
 	}
-	strdone := <-jsdone
-	resultJson := jsoniter.Get([]byte(strdone))
+	strdown := <-jsdone
+	resultJson := jsoniter.Get([]byte(strdown))
 
 	if resultJson.Get("Success").ToBool() {
 		return jsoniter.Get([]byte(resultJson.Get("ReturnValue").ToString())), nil

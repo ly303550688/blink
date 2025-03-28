@@ -5,6 +5,7 @@ package blink
 import "C"
 import (
 	"github.com/lxn/win"
+	log "github.com/sirupsen/logrus"
 	"unsafe"
 )
 
@@ -67,6 +68,27 @@ func goOnNewWebView(window C.mbWebView, newWebView C.mbWebView, url *C.char) {
 func goOnMbRunJsCallback(result *C.char) {
 	strurl := C.GoString(result)
 	jsdone <- strurl
+}
+
+//export goOnConsole
+func goOnConsole(window C.mbWebView, level C.mbConsoleLevel, message *C.char, sourceName *C.char, sourceLine C.unsigned, stackTrace *C.char) {
+	strmessage := C.GoString(message)
+	strsrc := C.GoString(sourceName)
+	var lv log.Level
+
+	if level == 4 {
+		lv = log.DebugLevel
+	} else if level == 2 {
+		lv = log.WarnLevel
+	} else if level == 3 {
+		lv = log.ErrorLevel
+	} else if level == 6 {
+		lv = log.FatalLevel
+	} else {
+		lv = log.InfoLevel
+	}
+
+	logger.Logf(lv, "%s  %s line:%v", strmessage, strsrc, sourceLine)
 }
 
 //export goNewWebViewInit

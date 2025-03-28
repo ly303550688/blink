@@ -28,7 +28,6 @@ var isDebug = true
 //设置是否为调试模式
 func SetDebugMode(debug bool) {
 	isDebug = debug
-	logger.SetOutput(writer(debug))
 }
 
 //设置临时目录

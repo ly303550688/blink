@@ -8,6 +8,7 @@ mbWebView createWebWindow(bool isTransparent, int x, int y, int width, int heigh
     mbSetLocalStorageFullPath(window, wlocalstorage);
     mbSetCookieJarFullPath(window, wcookiejar);
     mbSetNavigationToNewWindowEnable(window, true);
+    //mbSetResourceGc(window, 5);
     // 初始化网络文件系统
     initNetFS(window);
     // 初始化webview事件

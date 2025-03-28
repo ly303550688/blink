@@ -36,5 +36,6 @@ void goNewWebViewInit(mbWebView window);
 void goOnLoadingFinish(mbWebView window, const utf8 *url, mbLoadingResult result, const utf8 *reason);
 // 回调js
 void goOnMbRunJsCallback(const utf8 *result);
+void goOnConsole(mbWebView window, mbConsoleLevel level, const utf8 *message, const utf8 *sourceName, unsigned sourceLine, const utf8 *stackTrace);
 /*****************event end**************/
 #endif

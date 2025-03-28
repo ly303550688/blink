@@ -38,6 +38,11 @@ void MB_CALL_TYPE onLoadingFinish(mbWebView webView, void *param, mbWebFrameHand
     goOnLoadingFinish(webView, url, result, failedReason);
 }
 
+void MB_CALL_TYPE onConsoleCallback(mbWebView webView, void *param, mbConsoleLevel level, const utf8 *message, const utf8 *sourceName, unsigned sourceLine, const utf8 *stackTrace)
+{
+    goOnConsole(webView, level, message, sourceName, sourceLine, stackTrace);
+}
+
 mbWebView MB_CALL_TYPE onCreateView(mbWebView webView, void *param, mbNavigationType navigationType, const utf8 *url, const mbWindowFeatures *windowFeatures)
 {
     mbWebView newWebView = mbCreateWebWindow(MB_WINDOW_TYPE_POPUP, NULL, windowFeatures->x, windowFeatures->y, windowFeatures->width, windowFeatures->height);
@@ -61,7 +66,7 @@ void MB_CALL_TYPE onJsQueryCallback(mbWebView webView, void *param, mbJsExecStat
 void initWebViewEvent(mbWebView window)
 {
     // 窗口被销毁
-    mbOnDestroy(window, onWindowDestroyCallback, NULL);
+    // mbOnDestroy(window, onWindowDestroyCallback, NULL);
     // JS引擎初始化完毕
     mbOnDidCreateScriptContext(window, onDidCreateScriptContextCallback, NULL);
     // document ready
@@ -75,4 +80,5 @@ void initWebViewEvent(mbWebView window)
     // 加载完成事件
     mbOnLoadingFinish(window, onLoadingFinish, NULL);
     mbOnJsQuery(window, onJsQueryCallback, NULL);
+    mbOnConsole(window, onConsoleCallback, NULL);
 }

@@ -21,8 +21,8 @@ void initBlink(char *dllpath, char *mainDllpath, char *localstorage, char *cooki
     mbstowcs(wcookiejar, cookiejar, cSize);
 
     // 加载dll
-    mbSetMbDllPath(wdllpath);
-    mbSetMbMainDllPath(wmainDllpath);
+    //mbSetMbDllPath(wdllpath);
+    //mbSetMbMainDllPath(wmainDllpath);
 
     mbSettings settings;
     memset(&settings, 0, sizeof(settings));
